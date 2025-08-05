@@ -10,6 +10,12 @@
       "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/schedule-notifications",
+      "schedule": "*/30 * * * *"
+    }
+  ],
 
   "headers": [
     {
