@@ -1,103 +1,175 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState } from 'react';
+import { Settings, Bell, BellOff } from 'lucide-react';
+import { Greeting } from '@/components/dashboard/greeting';
+import { ProgressDisplay } from '@/components/dashboard/progress-display';
+import { SipButton } from '@/components/dashboard/sip-button';
+import { Button } from '@/components/ui/button';
+import { DndSettings } from '@/components/settings/dnd-settings';
+import { PushNotificationSetup } from '@/components/notifications/push-notification-setup';
+
+import { useHydration } from '@/hooks/use-hydration';
+import { useSettings } from '@/hooks/use-settings';
+import { useNotifications } from '@/hooks/use-notifications';
+import { formatUtils } from '@/lib/utils';
+
+export default function Dashboard() {
+  const { settings, isLoading: settingsLoading, getFlowerEmoji, isDndActive, getDndStatusMessage, updateDndSettings } = useSettings();
+  const {
+    todayProgress,
+    logIntake,
+    getLastSipTime,
+    isLoading: hydrationLoading
+  } = useHydration(settings.daily_goal_ml);
+  const {
+    isSubscribed,
+    subscribeToPush,
+    unsubscribeFromPush,
+    canSubscribe,
+    isLoading: notificationLoading
+  } = useNotifications();
+
+  const [showSettings, setShowSettings] = useState(false);
+
+  const handleSip = async (amount: number): Promise<boolean> => {
+    const success = await logIntake(amount);
+    if (success) {
+      console.log(`Logged ${amount}ml successfully!`);
+    }
+    return success;
+  };
+
+  const handleNotificationToggle = async () => {
+    if (isSubscribed) {
+      await unsubscribeFromPush();
+    } else {
+      await subscribeToPush();
+    }
+  };
+
+  const isLoading = settingsLoading || hydrationLoading;
+  const lastSipTime = getLastSipTime();
+  const flowerEmoji = getFlowerEmoji();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blossom-pink via-lilac-lavender to-mint-green flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin text-4xl mb-4">🌸</div>
+          <div className="text-charcoal font-body">Loading your garden...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-br from-blossom-pink via-lilac-lavender to-mint-green">
+      <header className="flex justify-between items-center p-4 pt-8">
+        <div className="w-10" />
+        <div className="text-center">
+          <div className="text-sm text-charcoal opacity-70 font-body">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleNotificationToggle}
+            disabled={notificationLoading || !canSubscribe}
+            className="w-10 h-10 p-0"
+          >
+            {isSubscribed ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSettings(true)}
+            className="w-10 h-10 p-0"
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+        </div>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="px-4 pb-8 space-y-8">
+        <Greeting
+          nickname={settings.nickname}
+          flowerEmoji={flowerEmoji}
+          className="mt-4"
+        />
+
+        <ProgressDisplay
+          progress={todayProgress}
+          settings={settings}
+          lastSipTime={lastSipTime}
+        />
+
+        <div className="flex justify-center">
+          <SipButton
+            onSip={handleSip}
+            flowerType={settings.flower_type}
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Quick Stats & DND Status */}
+        <div className="text-center space-y-2">
+          {getDndStatusMessage() ? (
+            <div className="text-sm text-charcoal opacity-70 font-body bg-lilac-lavender bg-opacity-20 rounded-full px-4 py-2 inline-block">
+              🌙 {getDndStatusMessage()}
+            </div>
+          ) : (
+            <div className="text-sm text-charcoal opacity-70 font-body">
+              Next reminder in {formatUtils.formatInterval(settings.interval_min)}
+            </div>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      {showSettings && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-charcoal font-heading">Settings</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSettings(false)}
+                className="w-8 h-8 p-0"
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              <DndSettings
+                settings={settings}
+                onUpdate={updateDndSettings}
+              />
+
+              <PushNotificationSetup />
+
+              <div className="pt-4 border-t border-blossom-pink border-opacity-20">
+                <Button
+                  onClick={() => setShowSettings(false)}
+                  className="w-full"
+                  variant="primary"
+                >
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }

@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* SipSweet Lamia Design System Colors */
+  --blossom-pink: #F8D7DA;
+  --lilac-lavender: #E6D0EC;
+  --mint-green: #DFF4E3;
+  --dew-blue: #D7EFFA;
+  --charcoal: #4A4A4A;
+
+  /* Light theme */
+  --background: var(--blossom-pink);
+  --foreground: var(--charcoal);
+  --primary: var(--blossom-pink);
+  --secondary: var(--lilac-lavender);
+  --accent: var(--mint-green);
+  --muted: var(--dew-blue);
 }
 
 @theme inline {
+  /* Colors */
+  --color-blossom-pink: var(--blossom-pink);
+  --color-lilac-lavender: var(--lilac-lavender);
+  --color-mint-green: var(--mint-green);
+  --color-dew-blue: var(--dew-blue);
+  --color-charcoal: var(--charcoal);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+
+  /* Typography */
+  --font-heading: 'Dancing Script', cursive;
+  --font-body: 'Poppins', sans-serif;
+  --font-sans: 'Poppins', sans-serif;
+
+  /* Animations */
+  --animate-petal-pop: petalPop 0.3s ease-out;
+  --animate-progress-fill: progressFill 0.5s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes petalPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes progressFill {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
